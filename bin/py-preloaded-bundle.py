@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Create bundle with preloaded modules.
 
@@ -29,12 +31,14 @@ from preloaded import startup
 
 def main():
     """main entry"""
-    arg_parser = argparse.ArgumentParser(description=__doc__)
+    arg_parser = argparse.ArgumentParser(
+        epilog=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     arg_parser.add_argument("modules", nargs="+", help="modules to preload")
     arg_parser.add_argument("-o", "--output", required=True, help="output runtime file")
     args = arg_parser.parse_args()
 
     for mod_name in args.modules:
+        print("Import module:", mod_name)
         importlib.import_module(mod_name)
 
     pipe_read_end_fd, pipe_write_end_fd = os.pipe()
