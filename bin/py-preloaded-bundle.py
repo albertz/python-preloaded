@@ -21,8 +21,10 @@ Example:
     ./python-pytorch my_script.py --foo bar --baz 123
 """
 
+from __future__ import annotations
 import argparse
 import importlib
+import sys
 import os
 import textwrap
 from preloaded import criu
@@ -37,14 +39,35 @@ def main():
     arg_parser.add_argument("-o", "--output", required=True, help="output runtime file")
     args = arg_parser.parse_args()
 
-    for mod_name in args.modules:
+    c2p_r, c2p_w = os.pipe()
+    p2c_r, p2c_w = os.pipe()
+    fork_pid = os.fork()
+    if fork_pid == 0:  # child
+        os.close(p2c_w)
+        os.close(c2p_r)
+        preload_and_startup(modules=args.modules, output=args.output, c2p_w=c2p_w, p2c_r=p2c_r)
+        os.read(p2c_r, 1)  # block, wait
+        sys.exit()
+
+    # parent
+    os.read(c2p_r, 1)  # wait until child is ready
+    criu.dump(args.output + ".ckpt", pid=fork_pid)
+    os.write(p2c_r, b"X")  # notify
+
+
+def preload_and_startup(modules: list[str], output: str, *, c2p_w: int, p2c_r: int):
+    """
+    Preload, dump, and then potential startup after restore
+    """
+
+    for mod_name in modules:
         print("Import module:", mod_name)
         importlib.import_module(mod_name)
 
     pipe_read_end_fd, pipe_write_end_fd = os.pipe()
     unique_run_state_id = get_unique_run_state_id()
 
-    with open(args.output, "w") as f:
+    with open(output, "w") as f:
         f.write(textwrap.dedent(f"""\
             #!/usr/bin/env python3
             
@@ -57,14 +80,16 @@ def main():
                     pipe_read_end_fd={pipe_read_end_fd},
                     pipe_write_end_fd={pipe_write_end_fd})
             """))
-    os.chmod(args.output, 0o755)
+    os.chmod(output, 0o755)
+    
+    os.write(c2p_w, b"X")  # notify
+    os.read(p2c_r, 1)  # wait
 
-    criu.dump(args.output + ".ckpt")
     # Now we are here either from the py-preloaded-bundle original call, or from the restore.
     # This is like a persistent fork.
     if unique_run_state_id == get_unique_run_state_id():
         # In original py-preloaded-bundle call.
-        print("Created executable", args.output)
+        print("Created executable", output)
 
     else:
         startup.startup_after_dump(pipe_read_end_fd=pipe_read_end_fd)
