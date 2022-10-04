@@ -11,7 +11,8 @@ def dump(checkpoint_path: str, pid: int):
     """
     Dump
     """
-    subprocess.check_call(["criu", "dump", "-t", str(pid), "-D", checkpoint_path])
+    os.makedirs(checkpoint_path, exist_ok=True)
+    subprocess.check_call(["sudo", "criu", "dump", "-t", str(pid), "-D", checkpoint_path, "--shell-job"])
 
 
 def restore(checkpoint_path: str, *, p2c_r_fd: int, old_pipe_ino: int):

@@ -15,10 +15,10 @@ Example:
     python my_script.py --foo bar --baz 123
 
     # create bundle:
-    py-preloaded-bundle.py pytorch -o python-pytorch
+    py-preloaded-bundle.py pytorch -o python-pytorch.bin
 
     # run with bundle, faster startup:
-    ./python-pytorch my_script.py --foo bar --baz 123
+    ./python-pytorch.bin my_script.py --foo bar --baz 123
 """
 
 from __future__ import annotations
@@ -41,9 +41,9 @@ def main():
 
     c2p_r_fd, c2p_w_fd = os.pipe()
     p2c_r_fd, p2c_w_fd = os.pipe()
-    old_pipe_ino = os.fstat(p2c_w_fd).st_ino
     os.set_inheritable(c2p_w_fd, True)
     os.set_inheritable(p2c_r_fd, True)
+    old_pipe_ino = os.fstat(p2c_r_fd).st_ino
 
     with open(args.output, "w") as f:
         f.write(textwrap.dedent(f"""\
@@ -54,9 +54,9 @@ def main():
 
             if __name__ == "__main__":
                 startup_restore(
-                    checkpoint_path=os.path.absname(__file__) + ".ckpt",
+                    checkpoint_path=os.path.abspath(__file__) + ".ckpt",
                     old_pipe_ino={old_pipe_ino},
-                    p2c_w_fd={p2c_w_fd})
+                    p2c_r_fd={p2c_r_fd})
             """))
     os.chmod(args.output, 0o755)
 
@@ -71,12 +71,11 @@ def main():
     os.close(c2p_w_fd)
     os.close(p2c_r_fd)
     c2p_r = os.fdopen(c2p_r_fd, "rb")
-    p2c_w = os.fdopen(p2c_w_fd, "wb")
     _io.read_expected(c2p_r, b"child_ready")  # wait until child is ready
+
     criu.dump(args.output + ".ckpt", pid=fork_pid)
-    _io.write_bytes(p2c_w, b"exit_from_bundle_exec_creator")  # notify
-    p, res = os.waitpid(fork_pid, 0)
-    assert p == fork_pid and res == 0, f"exit code {res} from pid {p}, child pip {fork_pid}"
+    # Successful dump should also exit the child, but anyway check waitpid, but discarding the exit code.
+    os.waitpid(fork_pid, 0)
     print("Dumped executable state, created startup helper script:", args.output)
 
 
@@ -90,15 +89,11 @@ def child_preload_and_startup(*, modules: list[str], c2p_w: BinaryIO, p2c_r: Bin
         importlib.import_module(mod_name)
 
     c2p_w.write(b"child_ready")  # notify
+    c2p_w.flush()
     parent_cmd = _io.read_bytes(p2c_r)  # wait, get command
 
-    # Now we are here either from the py-preloaded-bundle original call, or from the restore.
-    # This is like a persistent fork.
-    if parent_cmd == b"exit_from_bundle_exec_creator":
-        # In original py-preloaded-bundle call.
-        return
-
-    elif parent_cmd == b"startup_after_dump":
+    # Now we should be in the restored state. The original state should have been stopped.
+    if parent_cmd == b"startup_after_dump":
         startup.startup_after_dump(p2c_r=p2c_r)
         # Should not get here.
         raise Exception("startup_after_dump should not return")

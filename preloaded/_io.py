@@ -8,6 +8,7 @@ from typing import BinaryIO
 
 def write_int(f: BinaryIO, data: int):
     f.write(data.to_bytes(4, "little"))
+    f.flush()
 
 
 def read_int(f: BinaryIO) -> int:
@@ -25,6 +26,7 @@ def read_str(f: BinaryIO) -> str:
 def write_bytes(f: BinaryIO, data: bytes):
     f.write(len(data).to_bytes(4, "little"))
     f.write(data)
+    f.flush()
 
 
 def read_bytes(f: BinaryIO) -> bytes:
@@ -45,4 +47,4 @@ def read_str_array(f: BinaryIO) -> list[str]:
 
 def read_expected(f: BinaryIO, expected: bytes):
     res = f.read(len(expected))
-    assert res == expected
+    assert res == expected, f"Expected {expected!r}, got {res!r}"

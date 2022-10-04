@@ -36,6 +36,7 @@ def startup_restore(*, checkpoint_path: str, p2c_r_fd: int, old_pipe_ino: int):
     # parent
     os.close(p2c_r_fd)
     p2c_w = os.fdopen(p2c_w_fd, "wb")
+    _io.write_bytes(p2c_w, b"startup_after_dump")
     _io.write_str_array(p2c_w, sys.argv)
     p, res = os.waitpid(child_pid, 0)
     assert p == child_pid, f"exit code {res} from pid {p}, child pip {child_pid}"
