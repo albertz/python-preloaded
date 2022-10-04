@@ -16,3 +16,4 @@ def restore(checkpoint_path: str):
     """
     restore
     """
+    subprocess.check_call(["criu", "restore"])
