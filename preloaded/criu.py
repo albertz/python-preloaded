@@ -2,18 +2,27 @@
 Simple CRIU wrapper
 """
 
+import os
 import subprocess
+from . import utils
 
 
 def dump(checkpoint_path: str, pid: int):
     """
     Dump
     """
-    subprocess.check_call(["criu", "dump", "-t", str(pid)])
+    subprocess.check_call(["criu", "dump", "-t", str(pid), "-D", checkpoint_path])
 
 
-def restore(checkpoint_path: str):
+def restore(checkpoint_path: str, *, p2c_r_fd: int, old_pipe_ino: int):
     """
-    restore
+    restore. does not return when successful
     """
-    subprocess.check_call(["criu", "restore"])
+    criu_bin = utils.which("criu")
+    if not criu_bin:
+        raise Exception("Cannot find criu binary in PATH")
+    os.execl(
+        criu_bin,
+        criu_bin, "restore",
+        "-D", checkpoint_path,
+        "--inherit-fd", f"fd[{p2c_r_fd}]:pipe:[{old_pipe_ino}]")

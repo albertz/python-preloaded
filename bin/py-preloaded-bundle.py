@@ -39,29 +39,48 @@ def main():
     arg_parser.add_argument("-o", "--output", required=True, help="output runtime file")
     args = arg_parser.parse_args()
 
-    c2p_r, c2p_w = os.pipe()
-    p2c_r, p2c_w = os.pipe()
-    os.set_inheritable(c2p_w, True)
-    os.set_inheritable(p2c_r, True)
+    c2p_r_fd, c2p_w_fd = os.pipe()
+    p2c_r_fd, p2c_w_fd = os.pipe()
+    old_pipe_ino = os.fstat(p2c_w_fd).st_ino
+    os.set_inheritable(c2p_w_fd, True)
+    os.set_inheritable(p2c_r_fd, True)
+
+    with open(args.output, "w") as f:
+        f.write(textwrap.dedent(f"""\
+            #!/usr/bin/env python3
+
+            import os
+            from preloaded.startup import startup_restore
+
+            if __name__ == "__main__":
+                startup_restore(
+                    checkpoint_path=os.path.absname(__file__) + ".ckpt",
+                    old_pipe_ino={old_pipe_ino},
+                    p2c_w_fd={p2c_w_fd})
+            """))
+    os.chmod(args.output, 0o755)
+
     fork_pid = os.fork()
     if fork_pid == 0:  # child
-        c2p_w = os.fdopen(c2p_w, "wb")
-        p2c_r = os.fdopen(p2c_r, "rb")
-        child_preload_and_startup(modules=args.modules, output=args.output, c2p_w=c2p_w, p2c_r=p2c_r)
-        p2c_r.read(1)  # block, wait
+        c2p_w = os.fdopen(c2p_w_fd, "wb")
+        p2c_r = os.fdopen(p2c_r_fd, "rb")
+        child_preload_and_startup(modules=args.modules, c2p_w=c2p_w, p2c_r=p2c_r)
         sys.exit()
 
     # parent
-    c2p_r = os.fdopen(c2p_r, "rb")
-    p2c_w = os.fdopen(p2c_w, "wb")
+    os.close(c2p_w_fd)
+    os.close(p2c_r_fd)
+    c2p_r = os.fdopen(c2p_r_fd, "rb")
+    p2c_w = os.fdopen(p2c_w_fd, "wb")
     _io.read_expected(c2p_r, b"child_ready")  # wait until child is ready
     criu.dump(args.output + ".ckpt", pid=fork_pid)
     _io.write_bytes(p2c_w, b"exit_from_bundle_exec_creator")  # notify
     p, res = os.waitpid(fork_pid, 0)
     assert p == fork_pid and res == 0, f"exit code {res} from pid {p}, child pip {fork_pid}"
+    print("Dumped executable state, created startup helper script:", args.output)
 
 
-def child_preload_and_startup(modules: list[str], output: str, *, c2p_w: BinaryIO, p2c_r: BinaryIO):
+def child_preload_and_startup(*, modules: list[str], c2p_w: BinaryIO, p2c_r: BinaryIO):
     """
     Preload, dump, and then potential startup after restore
     """
@@ -70,21 +89,6 @@ def child_preload_and_startup(modules: list[str], output: str, *, c2p_w: BinaryI
         print("Import module:", mod_name)
         importlib.import_module(mod_name)
 
-    with open(output, "w") as f:
-        f.write(textwrap.dedent(f"""\
-            #!/usr/bin/env python3
-            
-            import os
-            from preloaded.startup import startup_restore
-            
-            if __name__ == "__main__":
-                startup_restore(
-                    checkpoint_path=os.path.absname(__file__) + ".ckpt",
-                    c2p_w={c2p_w.fileno()},
-                    p2c_r={p2c_r.fileno()})
-            """))
-    os.chmod(output, 0o755)
-    
     c2p_w.write(b"child_ready")  # notify
     parent_cmd = _io.read_bytes(p2c_r)  # wait, get command
 
@@ -92,10 +96,12 @@ def child_preload_and_startup(modules: list[str], output: str, *, c2p_w: BinaryI
     # This is like a persistent fork.
     if parent_cmd == b"exit_from_bundle_exec_creator":
         # In original py-preloaded-bundle call.
-        print("Created executable", output)
+        return
 
     elif parent_cmd == b"startup_after_dump":
         startup.startup_after_dump(p2c_r=p2c_r)
+        # Should not get here.
+        raise Exception("startup_after_dump should not return")
 
     else:
         raise ValueError(f"unexpected parent_cmd {parent_cmd}")
