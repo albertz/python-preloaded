@@ -11,3 +11,4 @@ Then later we can load this checkpoint (very fast) and run any random Python scr
 CRIU currently needs root access for dump/restore.
 However, there is ongoing work to support a non-root option in https://github.com/checkpoint-restore/criu/pull/1930.
 
+Or maybe [DMTCP](https://github.com/dmtcp/dmtcp/) is a better alternative to CRIU?
