@@ -7,3 +7,7 @@ right after we imported some slow-to-import module like TensorFlow or PyTorch.
 of 10-20 seconds.)
 Then later we can load this checkpoint (very fast) and run any random Python script
 (we can use [runpy](https://docs.python.org/3/library/runpy.html)).
+
+CRIU currently needs root access for dump/restore.
+However, there is ongoing work to support a non-root option in https://github.com/checkpoint-restore/criu/pull/1930.
+
