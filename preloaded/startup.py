@@ -21,7 +21,7 @@ def startup_after_dump(*, p2c_r: BinaryIO):
     runpy.run_path(sys.argv[0], run_name="__main__")
 
 
-def startup_restore(*, checkpoint_path: str, p2c_r_fd: int, old_pipe_ino: int):
+def startup_restore_criu(*, checkpoint_path: str, p2c_r_fd: int, old_pipe_ino: int):
     """main entry, prepare restore"""
 
     p2c_r_new_fd, p2c_w_fd = os.pipe()

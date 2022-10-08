@@ -57,7 +57,7 @@ def main():
             from preloaded.startup import startup_restore
 
             if __name__ == "__main__":
-                startup_restore(
+                startup_restore_criu(
                     checkpoint_path=os.path.abspath(__file__) + ".ckpt",
                     old_pipe_ino={old_pipe_ino},
                     p2c_r_fd={p2c_r_fd})
