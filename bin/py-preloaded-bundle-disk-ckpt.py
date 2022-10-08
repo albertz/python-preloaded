@@ -5,7 +5,7 @@ Create bundle with preloaded modules.
 
 Usage:
 
-    py-preloaded-bundle.py <module> <module> ... -o <output-runtime-file>
+    py-preloaded-bundle-disk-ckpt.py <module> <module> ... -o <output-runtime-file>
 
     <output-runtime-file> <python-script>
 
@@ -15,7 +15,7 @@ Example:
     python my_script.py --foo bar --baz 123
 
     # create bundle:
-    py-preloaded-bundle.py pytorch -o python-pytorch.bin
+    py-preloaded-bundle-disk-ckpt.py pytorch -o python-pytorch.bin
 
     # run with bundle, faster startup:
     ./python-pytorch.bin my_script.py --foo bar --baz 123
