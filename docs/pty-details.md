@@ -14,7 +14,7 @@ Specifically, what I don't understand:
 - What is a "session leader" or "process group leader"?
 - What do [setsid](https://linux.die.net/man/2/setsid), [setpgid](https://linux.die.net/man/2/setpgid), etc do?
 - Can you change the parent process?
-- What does `disown` do?
+- What does `disown` do? `nohup`? When do you get `SIGHUP`?
 - What is `PR_SET_CHILD_SUBREAPER`? What is a "child subreaper" of a process?
 
 Some resources:
@@ -39,3 +39,12 @@ PTY has two endpoints:
 Termios sits between the master/slave PTY endpoints.
 Termios is implemented in the kernel. 
 Termios controls all the logic of the PTY.
+
+SIGHUP: controlling terminal closed.
+
+Parent of a process is actually not really relevant?
+When the parent dies (e.g. the shell),
+the child process is reparented automatically (e.g. to `init`)
+and continues to run (unless it now crashes due to SIGHUP or pipe destroyed).
+So we maybe don't need to care about proper reparenting,
+and simply need to care about proper PTY and stdin/stdout/stderr setup.
