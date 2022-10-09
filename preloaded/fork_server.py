@@ -25,14 +25,18 @@ def server_main(*, sock: socket.socket, modules: List[str]):
 
     # See docs/pty-details.md for some background.
     if os.fork() != 0:
-        # In parent, exit now. This is such that the child will be reparented.
+        # In parent, exit now. This is such that the child will be reparented,
+        # and also that the child is not a process group leader,
+        # such that os.setsid() works below.
         return
     # In child, but parent will exit soon.
     # Detach the TTY now.
-    fcntl.ioctl(0, termios.TIOCNOTTY)
+    fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)
+    fcntl.ioctl(fd, termios.TIOCNOTTY)
+    os.setsid()
     os.close(0)
-    os.dup2(os.open(sys.argv[0] + ".server.stdout", os.O_WRONLY), 1)
-    os.dup2(os.open(sys.argv[0] + ".server.stderr", os.O_WRONLY), 2)
+    os.dup2(os.open(sys.argv[0] + ".server.stdout", os.O_CREAT|os.O_WRONLY), 1)
+    os.dup2(os.open(sys.argv[0] + ".server.stderr", os.O_CREAT|os.O_WRONLY), 2)
 
     # This was started when the bundled app was started for the first time,
     # thus we were given some arguments which also should be handled now.
