@@ -26,6 +26,7 @@ def child_main(*, sock: socket.socket):
     print("Wait for server to be ready", file=sys.stderr)
     _io.read_expected(p2c_r, b"ok")
     print("Entering PTY proxy loop", file=sys.stderr)
+    os.close(slave_fd)
 
     tcattr = termios.tcgetattr(0)
     orig_tcattr = tcattr.copy()
