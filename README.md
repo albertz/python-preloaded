@@ -45,25 +45,28 @@ print("TF:", tf.__version__)
 Now try to run it directly, and measure the time: 
 ```
 $ time python3 demo-import-tensorflow.py
-TF: 2.7.0
+TF: 2.3.0
 
 ________________________________________________________
-Executed in    1.47 secs    fish           external
-   usr time    1.68 secs    0.07 millis    1.68 secs
-   sys time    1.60 secs    1.20 millis    1.60 secs
+Executed in    8.31 secs    fish           external
+   usr time    3.39 secs  278.00 micros    3.39 secs
+   sys time    0.67 secs   83.00 micros    0.67 secs
 ```
+This is on a slow filesystem, NFS specifically.
+This is already after the files are cached (I just ran the same command immediately before).
+Otherwise, the startup time is even over 14 seconds.
 
 The starter script was not run yet, so the first start is just as slow:
 ```
 $ time ./python-tf.bin demo-import-tensorflow.py
-Existing socket but can not connect: [Errno 61] Connection refused
+Existing socket but can not connect: [Errno 111] Connection refused
 Import module: tensorflow
-TF: 2.7.0
+TF: 2.3.0
 
 ________________________________________________________
-Executed in    1.54 secs    fish           external
-   usr time    1.81 secs    0.07 millis    1.81 secs
-   sys time    1.56 secs    1.32 millis    1.56 secs
+Executed in    8.35 secs    fish           external
+   usr time    3.19 secs  768.00 micros    3.19 secs
+   sys time    0.72 secs  228.00 micros    0.72 secs
 ```
 
 Now it is running in the background.
@@ -77,16 +80,16 @@ Open new PTY
 Send PTY fd to server
 Wait for server to be ready
 Entering PTY proxy loop
-TF: 2.7.0
+TF: 2.3.0
 
 ________________________________________________________
-Executed in  246.09 millis    fish           external
-   usr time   60.38 millis    0.08 millis   60.30 millis
-   sys time   25.17 millis    1.66 millis   23.52 millis
+Executed in  261.56 millis    fish           external
+   usr time   64.24 millis  542.00 micros   63.70 millis
+   sys time   33.59 millis  163.00 micros   33.43 millis
 ```
 As you see, the startup time is now very fast.
-This demo is on a fast filesystem.
-On a slow filesystem, the difference can be much larger.
+This is also just as fast when executed at a later time,
+when the files are not cached anymore.
 
 
 ## Method 2: Process pool
