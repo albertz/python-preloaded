@@ -1,0 +1,38 @@
+name: Publish
+
+on:
+  workflow_run:
+    workflows: ["Tests"]
+    branches: [main]
+    types:
+      - completed
+  workflow_dispatch:
+
+jobs:
+  publish:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.event == 'push' &&
+      github.repository == 'albertz/python-preloaded'
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+
+    - name: Install Python deps
+      run: |
+        echo "PATH=$PATH:~/.local/bin" >> $GITHUB_ENV
+        pip3 install --user --upgrade pip setuptools wheel
+
+    - run: python3 setup.py sdist
+
+    # https://github.com/marketplace/actions/pypi-publish
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_API_TOKEN }}
