@@ -50,7 +50,10 @@ def child_main(*, sock: socket.socket):
         while True:
             rl, _, _ = select.select([0, master_fd], [], [])
             if master_fd in rl:
-                buf = os.read(master_fd, 4096)
+                try:
+                    buf = os.read(master_fd, 4096)
+                except OSError:  # Input/output error, when closed
+                    break
                 if not buf:
                     break
                 stdout.write(buf)
