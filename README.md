@@ -19,6 +19,16 @@ we can continue to run any random Python script
 (we can use [runpy](https://docs.python.org/3/library/runpy.html)).
 
 
+## Installation
+
+```
+pip install preloaded
+```
+
+Now you should be able to run `py-preloaded-bundle-fork-server.py`.
+For example usage, see the example below.
+
+
 ## Method 1: Fork server
 
 Start CPython and import the libraries.
@@ -35,7 +45,7 @@ but it should run on most other Unixes as well.
 
 Create the starter script `python-tf.bin`:
 ```
-$ ./py-preloaded-bundle-fork-server.py tensorflow -o python-tf.bin
+$ py-preloaded-bundle-fork-server.py tensorflow -o python-tf.bin
 ```
 This starter script is supposed to be a dropin replacement to `python` itself.
 
