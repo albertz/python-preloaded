@@ -71,7 +71,7 @@ def child_main(*, sock: socket.socket):
     sys.exit()
 
 
-def server_main(*, sock: socket.socket, modules: List[str]):
+def server_main(*, sock: socket.socket, modules: List[str], file_prefix: str):
     """server for fork-server"""
     server_preload(modules=modules)
 
@@ -91,8 +91,8 @@ def server_main(*, sock: socket.socket, modules: List[str]):
     fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)
     fcntl.ioctl(fd, termios.TIOCNOTTY)
     os.close(0)
-    os.dup2(os.open(sys.argv[0] + ".server.stdout", os.O_CREAT|os.O_APPEND|os.O_WRONLY), 1)
-    os.dup2(os.open(sys.argv[0] + ".server.stderr", os.O_CREAT|os.O_APPEND|os.O_WRONLY), 2)
+    os.dup2(os.open(file_prefix + ".stdout", os.O_CREAT|os.O_APPEND|os.O_WRONLY), 1)
+    os.dup2(os.open(file_prefix + ".stderr", os.O_CREAT|os.O_APPEND|os.O_WRONLY), 2)
 
     # now wait for other childs
     while True:

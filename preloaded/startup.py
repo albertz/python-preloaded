@@ -48,9 +48,11 @@ def startup_restore_criu(*, checkpoint_path: str, p2c_r_fd: int, old_pipe_ino: i
 def startup_via_fork_server(*, modules: List[str]):
     """fork server method"""
     from . import fork_server
+    import platform
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     sock.set_inheritable(True)
-    sock_name = sys.argv[0] + ".server.socket"
+    file_prefix = sys.argv[0] + ".server." + platform.node()
+    sock_name = file_prefix + ".socket"
     if os.path.exists(sock_name):
         try:
             sock.connect(sock_name)
@@ -64,4 +66,4 @@ def startup_via_fork_server(*, modules: List[str]):
 
     sock.bind(sock_name)
     sock.listen()
-    fork_server.server_main(sock=sock, modules=modules)
+    fork_server.server_main(sock=sock, modules=modules, file_prefix=file_prefix)
