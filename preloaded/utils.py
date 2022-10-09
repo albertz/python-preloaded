@@ -5,12 +5,26 @@ Generic utils
 from typing import Optional, List
 import sys
 import os
-import runpy
 
 
 def child_run(args: List[str]):
     """run passed args"""
-    sys.modules.pop("__main__", None)  # make sure it is reloaded
+    import runpy
+    import types
+    import builtins as builtin_mod
+
+    # make sure we have a fresh __main__
+    sys.modules.pop("__main__", None)
+    # Partly copied from IPython.
+    new_main_module = types.ModuleType(
+        "__main__", doc="Automatically created __main__ module by python-preloaded")
+    # We must ensure that __builtin__ (without the final 's') is always
+    # available and pointing to the __builtin__ *module*.  For more details:
+    # http://mail.python.org/pipermail/python-dev/2001-April/014068.html
+    new_main_module.__dict__.setdefault('__builtin__', builtin_mod)
+    new_main_module.__dict__.setdefault('__builtins__', builtin_mod)
+    sys.modules["__main__"] = new_main_module
+
     # args[0] should be the bundled Python script
     sys.argv = args[1:]
     if not sys.argv:
