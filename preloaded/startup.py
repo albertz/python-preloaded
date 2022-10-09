@@ -19,7 +19,7 @@ def startup_after_criu_dump(*, p2c_r: BinaryIO):
     """
 
     sys.argv = _io.read_str_array(p2c_r)
-    runpy.run_path(sys.argv[0], run_name="__main__")
+    runpy.run_path(sys.argv[1], run_name="__main__")
 
 
 def startup_restore_criu(*, checkpoint_path: str, p2c_r_fd: int, old_pipe_ino: int):

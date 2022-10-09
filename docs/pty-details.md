@@ -63,14 +63,10 @@ as we have full control over the code anyway.
 Specifically:
 
 - in target proc:
-  - `fork`, exit parent, will reparent (disown logic). now in child:
+  - `fork`, exit parent, will reparent (disown logic, separate process group leader). now in child:
   - detach from current CTTY: `ioctl(fd, TIOCNOTTY)`
   - wait for startup proc. for each instance:
   - `fork`, now for the child:
-  - new proc in the target session (pid: `new_pgid`), just `fork` or `subprocess`
-    - make it a process group leader: `setpgid(0,0)`
-  - change process group leader: `setpgid(0,new_pgid)` (needed for `sedsid`)
-  - can kill/cleanup child proc `new_pgid` now
   - become session leader: `setsid`
   - set new PTY as CTTY: `ioctl(fd, TIOCSCTTY)`
 - in startup proc:
