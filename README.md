@@ -91,6 +91,11 @@ As you see, the startup time is now very fast.
 This is also just as fast when executed at a later time,
 when the files are not cached anymore.
 
+Interactively test the starter script environment:
+```
+$ ./python-tf.bin -m IPython
+```
+
 
 ## Method 2: Process pool
 
