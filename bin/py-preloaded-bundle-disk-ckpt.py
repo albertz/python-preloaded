@@ -54,7 +54,7 @@ def main():
             {'"' * 3}
 
             import os
-            from preloaded.startup import startup_restore
+            from preloaded.startup import startup_restore_criu
 
             if __name__ == "__main__":
                 startup_restore_criu(
