@@ -22,7 +22,11 @@ we can continue to run any random Python script
 Start CPython and import the libraries.
 The keep the process running as a fork server.
 Whenever a new instance it needed, we make a fork (`os.fork`),
-reparent and [reptyr](https://github.com/nelhage/reptyr) it.
+and apply a similar logic as [reptyr](https://github.com/nelhage/reptyr).
+
+This solution is very portable across Unix.
+I tested it so far on Linux and MacOSX,
+but it should run on most other Unixes as well.
 
 ### Example
 
