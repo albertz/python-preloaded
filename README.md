@@ -17,7 +17,7 @@ we can continue to run any random Python script
 (we can use [runpy](https://docs.python.org/3/library/runpy.html)).
 
 
-## Method 2: Fork server
+## Method 1: Fork server
 
 Start CPython and import the libraries.
 The keep the process running as a fork server.
