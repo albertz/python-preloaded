@@ -98,7 +98,7 @@ def child_preload_and_startup(*, modules: list[str], c2p_w: BinaryIO, p2c_r: Bin
 
     # Now we should be in the restored state. The original state should have been stopped.
     if parent_cmd == b"startup_after_dump":
-        startup.startup_after_dump(p2c_r=p2c_r)
+        startup.startup_after_criu_dump(p2c_r=p2c_r)
         # Should not get here.
         raise Exception("startup_after_dump should not return")
 
