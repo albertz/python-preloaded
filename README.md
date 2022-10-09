@@ -20,7 +20,7 @@ we can continue to run any random Python script
 ## Method 1: Fork server
 
 Start CPython and import the libraries.
-The keep the process running as a fork server.
+Then keep the process running as a fork server.
 Whenever a new instance it needed, we make a fork (`os.fork`),
 and apply a similar logic as [reptyr](https://github.com/nelhage/reptyr).
 Some technical details are [here](docs/pty-details.md).
