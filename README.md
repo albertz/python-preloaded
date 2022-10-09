@@ -1,5 +1,7 @@
 # Python Preloaded
 
+Project repo: https://github.com/albertz/python-preloaded
+
 Problem:
 
 The startup time of CPython including
@@ -23,7 +25,7 @@ Start CPython and import the libraries.
 Then keep the process running as a fork server.
 Whenever a new instance it needed, we make a fork (`os.fork`),
 and apply a similar logic as [reptyr](https://github.com/nelhage/reptyr).
-Some technical details are [here](docs/pty-details.md).
+Some technical details are [here](https://github.com/albertz/python-preloaded/blob/main/docs/pty-details.md).
 
 This solution is very portable across Unix.
 I tested it so far on Linux and MacOSX,
