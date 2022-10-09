@@ -16,6 +16,15 @@ def child_run(args: List[str]):
     if not sys.argv:
         import code
         code.interact()
+    elif sys.argv[0] in ["-h", "--help"]:
+        print(f"Usage: {args[0]} [-c cmd | -m mod | file | -] [arg] ...")
+    elif sys.argv[0] == "-m":
+        sys.argv = sys.argv[1:]
+        assert sys.argv, "missing module name after -m"
+        runpy.run_module(sys.argv[0], run_name="__main__", alter_sys=True)
+    elif sys.argv[0] == "-c":
+        assert len(sys.argv) == 2, f"expect exactly one arg after -c but got args {sys.argv}"
+        exec(sys.argv[1])
     else:
         script_path = os.path.realpath(sys.argv[0])
         sys.path.insert(0, os.path.dirname(script_path))
