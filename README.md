@@ -104,6 +104,9 @@ We always keep some pool (e.g. N=10 instances)
 of CPython + preloaded libraries alive in the background,
 and once we need a new instance, we just pick one from the pool.
 
+This shares a lot of logic with the fork server.
+The main difference basically is that we use `subprocess.Popen` instead of `os.fork`.
+
 (Currently not implemented)
 
 
