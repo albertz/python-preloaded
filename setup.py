@@ -10,7 +10,6 @@ Create ~/.pypirc with info:
         pypi
 
     [pypi]
-    repository: https://upload.pypi.org/legacy/
     username: ...
     password: ...
 
@@ -129,6 +128,11 @@ setup(
     license='MIT License',
     long_description_content_type='text/markdown',
     long_description=open('README.md').read(),
+    entry_points={
+        'console_scripts': [
+            'py-preloaded-bundle-fork-server.py=preloaded.py_preloaded_bundle_fork_server:main',
+        ],
+    },
     # https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -144,5 +148,5 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: System',
         'Topic :: Utilities',
-    ]
+    ],
 )

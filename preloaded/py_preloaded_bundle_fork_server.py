@@ -5,7 +5,7 @@ Create bundle with preloaded modules.
 
 Usage:
 
-    py-preloaded-bundle-disk-ckpt.py <module> <module> ... -o <output-runtime-file>
+    py-preloaded-bundle-fork-server.py <module> <module> ... -o <output-runtime-file>
 
     <output-runtime-file> <python-script>
 
