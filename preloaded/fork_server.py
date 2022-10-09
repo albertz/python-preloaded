@@ -17,6 +17,7 @@ from . import _io
 def child_main(*, sock: socket.socket):
     """child for fork-server"""
     p2c_r, c2p_w = sock.makefile("rb"), sock.makefile("wb")
+    _io.write_str(c2p_w, os.getcwd())
     _io.write_str_array(c2p_w, sys.argv)
 
     print("Open new PTY", file=sys.stderr)
@@ -114,6 +115,7 @@ def server_preload(*, modules: List[str]):
 def server_handle_child(conn: socket.socket):
     """handle child for fork-server"""
     c2p_r, p2c_w = conn.makefile("rb"), conn.makefile("wb")
+    cwd = _io.read_str(c2p_r)
     args = _io.read_str_array(c2p_r)
     print("Handle child:", args, file=sys.stderr)
 
@@ -133,6 +135,7 @@ def server_handle_child(conn: socket.socket):
         os.dup2(slave_fd, 2)
         if slave_fd > 2:
             os.close(slave_fd)
+        os.chdir(cwd)
         child_run(args)
         sys.exit(0)
 
