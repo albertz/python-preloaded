@@ -1,5 +1,14 @@
 .idea
+
 *.pyc
+__pycache__
+
+build/
+dist/
+*.egg-info/
+*.egg
+MANIFEST
+
 *.bin
 *.ckpt
 *.stdout
