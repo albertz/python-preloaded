@@ -6,10 +6,9 @@ from __future__ import annotations
 from typing import BinaryIO, List
 import os
 import sys
-import runpy
 import socket
 
-from . import _io
+from . import _io, utils
 
 
 def startup_after_criu_dump(*, p2c_r: BinaryIO):
@@ -18,8 +17,8 @@ def startup_after_criu_dump(*, p2c_r: BinaryIO):
     I.e. this is the context after restore, with the preloaded modules.
     """
 
-    sys.argv = _io.read_str_array(p2c_r)
-    runpy.run_path(sys.argv[1], run_name="__main__")
+    args = _io.read_str_array(p2c_r)
+    utils.child_run(args)
 
 
 def startup_restore_criu(*, checkpoint_path: str, p2c_r_fd: int, old_pipe_ino: int):

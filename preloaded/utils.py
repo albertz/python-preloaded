@@ -2,8 +2,24 @@
 Generic utils
 """
 
-from typing import Optional
+from typing import Optional, List
+import sys
 import os
+import runpy
+
+
+def child_run(args: List[str]):
+    """run passed args"""
+    sys.modules.pop("__main__", None)  # make sure it is reloaded
+    # args[0] should be the bundled Python script
+    sys.argv = args[1:]
+    if not sys.argv:
+        import code
+        code.interact()
+    else:
+        script_path = os.path.realpath(sys.argv[0])
+        sys.path.insert(0, os.path.dirname(script_path))
+        runpy.run_path(script_path, run_name="__main__")
 
 
 def which(program: str) -> Optional[str]:

@@ -4,14 +4,13 @@ fork server method
 
 from typing import List, Tuple
 import os
-import runpy
 import socket
 import sys
 import fcntl
 import termios
 import array
 import select
-from . import _io
+from . import _io, utils
 
 
 def child_main(*, sock: socket.socket):
@@ -79,7 +78,7 @@ def server_main(*, sock: socket.socket, modules: List[str], file_prefix: str):
         # In parent.
         # This was started when the bundled app was started for the first time,
         # thus we were given some arguments which also should be handled now.
-        child_run(sys.argv)
+        utils.child_run(sys.argv)
         # Leave the child alone. See below.
         return
 
@@ -91,8 +90,8 @@ def server_main(*, sock: socket.socket, modules: List[str], file_prefix: str):
     fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)
     fcntl.ioctl(fd, termios.TIOCNOTTY)
     os.close(0)
-    os.dup2(os.open(file_prefix + ".stdout", os.O_CREAT|os.O_APPEND|os.O_WRONLY), 1)
-    os.dup2(os.open(file_prefix + ".stderr", os.O_CREAT|os.O_APPEND|os.O_WRONLY), 2)
+    os.dup2(os.open(file_prefix + ".stdout", os.O_CREAT | os.O_APPEND | os.O_WRONLY), 1)
+    os.dup2(os.open(file_prefix + ".stderr", os.O_CREAT | os.O_APPEND | os.O_WRONLY), 2)
 
     # now wait for other childs
     while True:
@@ -136,26 +135,12 @@ def server_handle_child(conn: socket.socket):
         if slave_fd > 2:
             os.close(slave_fd)
         os.chdir(cwd)
-        child_run(args)
+        utils.child_run(args)
         sys.exit(0)
 
     # parent
     os.close(slave_fd)
     # continue, wait for potential other childs
-
-
-def child_run(args: List[str]):
-    """run passed args"""
-    sys.modules.pop("__main__", None)  # make sure it is reloaded
-    # args[0] should be the bundled Python script
-    sys.argv = args[1:]
-    if not sys.argv:
-        import code
-        code.interact()
-    else:
-        script_path = os.path.realpath(sys.argv[0])
-        sys.path.insert(0, os.path.dirname(script_path))
-        runpy.run_path(script_path, run_name="__main__")
 
 
 def _send_fds(sock: socket.socket, msg: bytes, fds: List[int]):
