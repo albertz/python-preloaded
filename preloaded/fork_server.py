@@ -153,6 +153,7 @@ def child_run(args: List[str]):
         import code
         code.interact()
     else:
+        sys.path.insert(0, os.path.dirname(sys.argv[0]))
         runpy.run_path(sys.argv[0], run_name="__main__")
 
 
