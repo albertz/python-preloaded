@@ -63,7 +63,7 @@ as we have full control over the code anyway.
 Specifically:
 
 - in target proc:
-  - `fork`, exit parent. now in child:
+  - `fork`, exit parent, will reparent (disown logic). now in child:
   - detach from current CTTY: `ioctl(fd, TIOCNOTTY)`
   - wait for startup proc. for each instance:
   - `fork`, now for the child:

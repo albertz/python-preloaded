@@ -49,6 +49,7 @@ def startup_via_fork_server(*, modules: List[str]):
     """fork server method"""
     from . import fork_server
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    sock.set_inheritable(True)
     sock_name = sys.argv[0] + ".socket"
     if os.path.exists(sock_name):
         try:
