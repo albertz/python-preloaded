@@ -2,3 +2,5 @@
 *.pyc
 *.bin
 *.ckpt
+*.stdout
+*.stderr
