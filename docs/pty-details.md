@@ -1,3 +1,5 @@
+Starting point:
+
 I must admit, I don't know all the details of how the PTY works.
 I tried to read through [reptyr](https://github.com/nelhage/reptyr)
 and [its blog post](https://blog.nelhage.com/2011/02/changing-ctty/)
@@ -31,7 +33,7 @@ Some resources:
 - [The TTY demystified, Linus Åkesson, 2008](http://www.linusakesson.net/programming/tty/index.php)
 - [Is reparenting from the shell possible? 2014](https://unix.stackexchange.com/questions/152379/is-reparenting-from-the-shell-possible/)
 
-Some comments, summary:
+After reading through the above, some notes on the newly acquired knowledge:
 
 PTY has two endpoints:
 - Master/server. This is the terminal emulator (e.g. xterm).
