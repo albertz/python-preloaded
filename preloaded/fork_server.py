@@ -153,8 +153,9 @@ def child_run(args: List[str]):
         import code
         code.interact()
     else:
-        sys.path.insert(0, os.path.dirname(sys.argv[0]))
-        runpy.run_path(sys.argv[0], run_name="__main__")
+        script_path = os.path.realpath(sys.argv[0])
+        sys.path.insert(0, os.path.dirname(script_path))
+        runpy.run_path(script_path, run_name="__main__")
 
 
 def _send_fds(sock: socket.socket, msg: bytes, fds: List[int]):
