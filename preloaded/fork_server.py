@@ -95,6 +95,8 @@ def server_main(*, sock: socket.socket, modules: List[str], file_prefix: str, si
         conn, _ = sock.accept()
         server_handle_child(conn)
         conn.close()
+        # Cleanup zombies.
+        os.waitpid(-1, os.WNOHANG)
 
 
 def server_preload(*, modules: List[str]):
@@ -140,7 +142,7 @@ def server_handle_child(conn: socket.socket):
 
     # parent
     os.close(slave_fd)
-    # continue, wait for potential other childs
+    # continue, wait for potential other children
 
 
 def _send_fds(sock: socket.socket, msg: bytes, fds: List[int]):
