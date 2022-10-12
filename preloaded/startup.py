@@ -48,12 +48,12 @@ def startup_via_fork_server(*, modules: List[str]):
     """fork server method"""
     from . import fork_server
     import platform
-    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    sock.set_inheritable(True)
     file_prefix = sys.argv[0] + ".server." + platform.node()
     sock_name = file_prefix + ".socket"
+
     if os.path.exists(sock_name):
         try:
+            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             sock.connect(sock_name)
         except socket.error as exc:
             print("Existing socket but can not connect:", exc, file=sys.stderr)
@@ -63,6 +63,33 @@ def startup_via_fork_server(*, modules: List[str]):
             fork_server.child_main(sock=sock)
             return
 
-    sock.bind(sock_name)
-    sock.listen()
-    fork_server.server_main(sock=sock, modules=modules, file_prefix=file_prefix)
+    # Socket not found or cannot connect, start server in new process.
+    print("Starting fork server", file=sys.stderr)
+    c2p_r, c2p_w = os.pipe()
+    os.set_inheritable(c2p_w, True)
+    pid = os.fork()
+    if pid == 0:  # child
+        # Run the fork server.
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.bind(sock_name)
+        sock.listen()
+        fork_server_pid = os.getpid()
+        try:
+            fork_server.server_main(
+                sock=sock, modules=modules, file_prefix=file_prefix, signal_ready=os.fdopen(c2p_w, "wb"))
+        finally:
+            if os.getpid() == fork_server_pid:
+                sock.close()
+                os.unlink(sock_name)
+        return
+
+    # parent
+    os.close(c2p_w)
+    print("Waiting for fork server", file=sys.stderr)
+    server_signal_ready = os.fdopen(c2p_r, "rb")
+    _io.read_expected(server_signal_ready, b"ready")
+    print("Connecting to fork server", file=sys.stderr)
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    sock.connect(sock_name)
+    print("Connected", file=sys.stderr)
+    fork_server.child_main(sock=sock)

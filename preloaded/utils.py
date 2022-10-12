@@ -7,6 +7,9 @@ import sys
 import os
 
 
+KillServerArg = "--preloaded-exit-server"
+
+
 def child_run(args: List[str]):
     """run passed args"""
     import runpy
@@ -31,7 +34,16 @@ def child_run(args: List[str]):
         import code
         code.interact()
     elif sys.argv[0] in ["-h", "--help"]:
-        print(f"Usage: {args[0]} [-c cmd | -m mod | file | -] [arg] ...")
+        print(f"Usage: {args[0]} [-c cmd | -m mod | file | (nothing) | (other)] [arg] ...")
+        print("Main Python args:")
+        print("  -c cmd: executes the Python code `cmd`")
+        print("  -m mod: executes the Python module `mod`")
+        print("  file: executes the Python file `file`")
+        print("  (nothing): interactive Python shell")
+        print("Or some of the other args:")
+        print(f"  {KillServerArg}: kill the server")
+    elif sys.argv[0] == KillServerArg:
+        print("Exiting server")
     elif sys.argv[0] == "-m":
         sys.argv = sys.argv[1:]
         assert sys.argv, "missing module name after -m"

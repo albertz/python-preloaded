@@ -2,7 +2,7 @@
 fork server method
 """
 
-from typing import List, Tuple
+from typing import Optional, List, Tuple, BinaryIO
 import os
 import socket
 import sys
@@ -70,17 +70,9 @@ def child_main(*, sock: socket.socket):
     sys.exit()
 
 
-def server_main(*, sock: socket.socket, modules: List[str], file_prefix: str):
+def server_main(*, sock: socket.socket, modules: List[str], file_prefix: str, signal_ready: Optional[BinaryIO] = None):
     """server for fork-server"""
     server_preload(modules=modules)
-
-    if os.fork() != 0:
-        # In parent.
-        # This was started when the bundled app was started for the first time,
-        # thus we were given some arguments which also should be handled now.
-        utils.child_run(sys.argv)
-        # Leave the child alone. See below.
-        return
 
     # See docs/pty-details.md for some background.
     # In child. Further logic here.
@@ -93,7 +85,12 @@ def server_main(*, sock: socket.socket, modules: List[str], file_prefix: str):
     os.dup2(os.open(file_prefix + ".stdout", os.O_CREAT | os.O_APPEND | os.O_WRONLY), 1)
     os.dup2(os.open(file_prefix + ".stderr", os.O_CREAT | os.O_APPEND | os.O_WRONLY), 2)
 
-    # now wait for other childs
+    if signal_ready:
+        signal_ready.write(b"ready")
+        signal_ready.flush()
+        signal_ready.close()
+
+    # now wait for other children
     while True:
         conn, _ = sock.accept()
         server_handle_child(conn)
@@ -125,7 +122,10 @@ def server_handle_child(conn: socket.socket):
     p2c_w.write(b"ok")
     p2c_w.flush()
 
-    pid = os.fork()
+    if args[1:2] == [utils.KillServerArg]:
+        pid = 0
+    else:
+        pid = os.fork()
     if pid == 0:  # child:
         os.setsid()
         fcntl.ioctl(slave_fd, termios.TIOCSCTTY, 1)
