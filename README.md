@@ -136,3 +136,6 @@ Or maybe [DMTCP](https://github.com/dmtcp/dmtcp/) is a better alternative to CRI
 (Currently incomplete)
 
 
+# Related work
+
+https://github.com/gdb/pyseidon
