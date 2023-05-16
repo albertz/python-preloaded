@@ -51,6 +51,13 @@ def startup_via_fork_server(*, modules: List[str]):
     file_prefix = sys.argv[0] + ".server." + platform.node()
     sock_name = file_prefix + ".socket"
 
+    try:
+        import faulthandler
+        import signal
+        faulthandler.register(signal.SIGUSR1, all_threads=True, chain=False)
+    except ImportError:
+        pass  # ignore
+
     if os.path.exists(sock_name):
         try:
             sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)

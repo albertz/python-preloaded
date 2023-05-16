@@ -15,10 +15,11 @@ from . import _io, utils
 
 def child_main(*, sock: socket.socket):
     """child for fork-server"""
-    p2c_r, c2p_w = sock.makefile("rb"), sock.makefile("wb")
+    p2c_r, c2p_w = sock.makefile("rb", buffering=0), sock.makefile("wb", buffering=0)
     _io.write_str(c2p_w, os.getcwd())
     _io.write_str_array(c2p_w, sys.argv)
 
+    print(f"Python-preloaded fork-server child main, pid {os.getpid()}", file=sys.stderr)
     print("Open new PTY", file=sys.stderr)
     master_fd, slave_fd = os.openpty()
     print("Send PTY fd to server", file=sys.stderr)
@@ -84,6 +85,7 @@ def server_main(*, sock: socket.socket, modules: List[str], file_prefix: str, si
     os.close(0)
     os.dup2(os.open(file_prefix + ".stdout", os.O_CREAT | os.O_APPEND | os.O_WRONLY), 1)
     os.dup2(os.open(file_prefix + ".stderr", os.O_CREAT | os.O_APPEND | os.O_WRONLY), 2)
+    print(f"Python-preloaded fork-server server main, pid {os.getpid()}", file=sys.stderr)
 
     if signal_ready:
         signal_ready.write(b"ready")
@@ -112,7 +114,7 @@ def server_preload(*, modules: List[str]):
 
 def server_handle_child(conn: socket.socket):
     """handle child for fork-server"""
-    c2p_r, p2c_w = conn.makefile("rb"), conn.makefile("wb")
+    c2p_r, p2c_w = conn.makefile("rb", buffering=0), conn.makefile("wb", buffering=0)
     cwd = _io.read_str(c2p_r)
     args = _io.read_str_array(c2p_r)
     print("Handle child:", args, file=sys.stderr)
@@ -146,12 +148,14 @@ def server_handle_child(conn: socket.socket):
 
 
 def _send_fds(sock: socket.socket, msg: bytes, fds: List[int]):
-    return sock.sendmsg([msg], [(socket.SOL_SOCKET, socket.SCM_RIGHTS, array.array("i", fds))])
+    res = sock.sendmsg([msg], [(socket.SOL_SOCKET, socket.SCM_RIGHTS, array.array("i", fds))])
+    assert res == len(msg), f"sendmsg failed: {res} != {len(msg)}"
 
 
 def _recv_fds(sock: socket.socket, msglen: int, maxfds: int) -> Tuple[bytes, List[int]]:
     fds = array.array("i")   # Array of ints
     msg, ancdata, flags, addr = sock.recvmsg(msglen, socket.CMSG_LEN(maxfds * fds.itemsize))
+    assert msg and ancdata, f"recvmsg failed, got msg {msg!r}, ancdata {ancdata!r}, flags {flags!r}, addr {addr!r}"
     for cmsg_level, cmsg_type, cmsg_data in ancdata:
         if cmsg_level == socket.SOL_SOCKET and cmsg_type == socket.SCM_RIGHTS:
             # Append data, ignoring any truncated integers at the end.
