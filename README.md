@@ -136,6 +136,15 @@ Or maybe [DMTCP](https://github.com/dmtcp/dmtcp/) is a better alternative to CRI
 (Currently incomplete)
 
 
+## PTY
+
+Usually you run scripts in a terminal emulator,
+and stdin/stdout/stderr are connected to the terminal emulator via tty IO
+(see e.g. [termios](https://docs.python.org/3/library/termios.html)).
+We create a PTY (pseudoterminal) and proxy the tty IO to the PTY.
+See [docs/pty-details.md](docs/pty-details.md) for more details.
+
+
 # Related work
 
 https://github.com/gdb/pyseidon
